@@ -6,11 +6,9 @@ import com.github.benmanes.caffeine.cache.Expiry;
 import dev.pmlsp.dict.domain.model.DictEntry;
 import dev.pmlsp.dict.domain.model.PixKey;
 import dev.pmlsp.dict.domain.port.out.DictEntryCache;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Caffeine-backed cache that supports a different TTL per entry — required because
@@ -26,17 +24,17 @@ public class CaffeineDictEntryCache implements DictEntryCache {
                 .maximumSize(maxSize)
                 .expireAfter(new Expiry<PixKey, Entry>() {
                     @Override
-                    public long expireAfterCreate(@NonNull PixKey key, @NonNull Entry value, long currentTime) {
-                        return TimeUnit.NANOSECONDS.convert(value.ttl().toNanos(), TimeUnit.NANOSECONDS);
+                    public long expireAfterCreate(PixKey key, Entry value, long currentTime) {
+                        return value.ttl().toNanos();
                     }
 
                     @Override
-                    public long expireAfterUpdate(@NonNull PixKey key, @NonNull Entry value, long currentTime, long currentDuration) {
-                        return TimeUnit.NANOSECONDS.convert(value.ttl().toNanos(), TimeUnit.NANOSECONDS);
+                    public long expireAfterUpdate(PixKey key, Entry value, long currentTime, long currentDuration) {
+                        return value.ttl().toNanos();
                     }
 
                     @Override
-                    public long expireAfterRead(@NonNull PixKey key, @NonNull Entry value, long currentTime, long currentDuration) {
+                    public long expireAfterRead(PixKey key, Entry value, long currentTime, long currentDuration) {
                         return currentDuration;
                     }
                 })

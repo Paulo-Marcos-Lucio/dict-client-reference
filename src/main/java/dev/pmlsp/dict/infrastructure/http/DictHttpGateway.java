@@ -24,8 +24,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +59,7 @@ public class DictHttpGateway implements DictGateway {
     public Optional<DictEntry> lookup(PixKey key, Ispb requesterIspb) {
         try {
             HttpDtos.EntryPayload payload = http.get()
-                    .uri("/entries/{type}/{value}", key.type().name(), encode(key.value()))
+                    .uri("/entries/{type}/{value}", key.type().name(), key.value())
                     .header("X-Payer-Ispb", requesterIspb.value())
                     .retrieve()
                     .body(HttpDtos.EntryPayload.class);
@@ -100,7 +98,7 @@ public class DictHttpGateway implements DictGateway {
     public void deleteEntry(PixKey key, Reason reason, Ispb requesterIspb) {
         try {
             http.method(org.springframework.http.HttpMethod.DELETE)
-                    .uri("/entries/{type}/{value}", key.type().name(), encode(key.value()))
+                    .uri("/entries/{type}/{value}", key.type().name(), key.value())
                     .header("X-Participant-Ispb", requesterIspb.value())
                     .body(new HttpDtos.DeleteEntryRequest(reason.name()))
                     .retrieve()
@@ -191,8 +189,9 @@ public class DictHttpGateway implements DictGateway {
             RestClientResponseException ex, PixKey key, UUID claimId) {
         HttpStatusCode status = ex.getStatusCode();
         HttpDtos.ProblemPayload problem = parseProblem(ex);
-        log.debug("dict.http.error status={} problem={} key={} claimId={}",
-                status, problem, key == null ? null : key.masked(), claimId);
+        log.warn("dict.http.error status={} bodyRaw={} key={} claimId={}",
+                status.value(), ex.getResponseBodyAsString(),
+                key == null ? null : key.masked(), claimId);
         return DictErrorMapper.toDomain(status, ex.getResponseHeaders(), problem, key, claimId);
     }
 
@@ -205,10 +204,6 @@ public class DictHttpGateway implements DictGateway {
     }
 
     // ---------- mapping helpers ----------
-
-    private static String encode(String raw) {
-        return URLEncoder.encode(raw, StandardCharsets.UTF_8);
-    }
 
     private static HttpDtos.CreateEntryRequest toCreateRequest(DictEntry entry) {
         return new HttpDtos.CreateEntryRequest(

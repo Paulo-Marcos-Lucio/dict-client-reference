@@ -9,6 +9,7 @@ import dev.pmlsp.dict.infrastructure.http.DictHttpClientFactory;
 import dev.pmlsp.dict.infrastructure.http.DictHttpGateway;
 import dev.pmlsp.dict.infrastructure.simulator.InMemoryDictStore;
 import dev.pmlsp.dict.infrastructure.simulator.SimulatorBehavior;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +29,8 @@ public class DictClientAutoConfig {
     }
 
     @Bean
-    DictEntryCache dictEntryCache(DictClientProperties props) {
-        return new CaffeineDictEntryCache(props.cache().maxSize());
+    DictEntryCache dictEntryCache(DictClientProperties props, MeterRegistry registry) {
+        return new CaffeineDictEntryCache(props.cache().maxSize(), registry);
     }
 
     @Bean
@@ -50,7 +51,7 @@ public class DictClientAutoConfig {
 
     @Bean
     @Profile("simulator")
-    SimulatorBehavior simulatorBehavior(DictClientProperties props) {
-        return new SimulatorBehavior(props.simulator());
+    SimulatorBehavior simulatorBehavior(DictClientProperties props, MeterRegistry registry) {
+        return new SimulatorBehavior(props.simulator(), registry);
     }
 }

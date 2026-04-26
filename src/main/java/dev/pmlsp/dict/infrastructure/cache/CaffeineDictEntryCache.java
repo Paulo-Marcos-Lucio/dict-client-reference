@@ -6,6 +6,8 @@ import com.github.benmanes.caffeine.cache.Expiry;
 import dev.pmlsp.dict.domain.model.DictEntry;
 import dev.pmlsp.dict.domain.model.PixKey;
 import dev.pmlsp.dict.domain.port.out.DictEntryCache;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -13,13 +15,14 @@ import java.util.Optional;
 /**
  * Caffeine-backed cache that supports a different TTL per entry — required because
  * each {@link PixKey} type has its own regulatory cap and entries with open claims
- * must not be cached at all.
+ * must not be cached at all. Registers a {@code dict.cache.size} gauge so dashboards
+ * can show estimated entry count over time.
  */
 public class CaffeineDictEntryCache implements DictEntryCache {
 
     private final Cache<PixKey, Entry> cache;
 
-    public CaffeineDictEntryCache(int maxSize) {
+    public CaffeineDictEntryCache(int maxSize, MeterRegistry registry) {
         this.cache = Caffeine.newBuilder()
                 .maximumSize(maxSize)
                 .expireAfter(new Expiry<PixKey, Entry>() {
@@ -39,6 +42,17 @@ public class CaffeineDictEntryCache implements DictEntryCache {
                     }
                 })
                 .build();
+
+        if (registry != null) {
+            Gauge.builder("dict.cache.size", cache, c -> (double) c.estimatedSize())
+                    .description("Estimated number of entries currently in the DICT lookup cache")
+                    .baseUnit("entries")
+                    .register(registry);
+            Gauge.builder("dict.cache.max_size", cache, c -> (double) maxSize)
+                    .description("Configured maximum size of the DICT lookup cache")
+                    .baseUnit("entries")
+                    .register(registry);
+        }
     }
 
     @Override

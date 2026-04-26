@@ -323,17 +323,52 @@ flowchart LR
     class PROM,TEMPO,LOKI store
 ```
 
-**Métricas customizadas:**
+**Métricas customizadas (Micrometer → Prometheus):**
 
-- `dict.operation.duration` — histograma com tag `op` (lookup/create/delete/claim) e `outcome` (success/error)
-- `dict.cache.hit` / `dict.cache.miss` — counter com tag `keyType`
-- `dict.gateway.errors` — counter com tag `errorClass` (KeyNotFound, RateLimited, etc.)
+| Métrica | Tipo | Tags | Descrição |
+|---|---|---|---|
+| `dict.operation.duration` | Histogram + percentiles (p50/p95/p99) + SLO buckets (50ms, 100ms, 250ms, 500ms, 1s) | `op`, `outcome` | Latência por operação e desfecho |
+| `dict.cache.hit` | Counter | `keyType` | Cache hits do lookup |
+| `dict.cache.miss` | Counter | `keyType` | Lookups que tiveram que ir ao gateway |
+| `dict.cache.size` | Gauge | — | Entradas atualmente no cache local |
+| `dict.cache.max_size` | Gauge | — | Capacidade máxima configurada |
+| `dict.gateway.errors` | Counter | `errorClass` | Erros do gateway por tipo de exception |
+| `dict.simulator.failures.injected` | Counter | — | Falhas sintéticas injetadas pelo simulador (debug) |
+| `dict.simulator.jitter.applied` | Counter | — | Requests que receberam latência sintética |
 
-**Span tags em cada operação:**
+**Span tags em cada operação:** `dict.operation`, `dict.key.type`, `dict.key.masked`, `dict.ispb`, `dict.outcome`.
 
-`dict.operation`, `dict.key.type`, `dict.key.masked`, `dict.ispb`, `dict.cache.outcome`.
+**Logs:** JSON com `traceId`, `spanId`, `dict.op`, `dict.keyMasked`, `dict.outcome`, `dict.durationMs` — joinable com traces no Grafana via derived field.
 
-**Logs:** JSON com `traceId`, `spanId`, `dict.op`, `dict.key.masked`, `dict.outcome` — joinable com traces no Grafana.
+### Dashboards Grafana versionados
+
+Dois dashboards são provisionados automaticamente quando a stack sobe (`make up`) — código em [`config/grafana/dashboards/`](./config/grafana/dashboards):
+
+| Dashboard | UID | O que mostra |
+|---|---|---|
+| **DICT — Operations Overview** | `dict-overview` | Stat panels (ops/sec, cache hit %, error %, p99), throughput por op + outcome (stacked), latência p50/p95/p99 por operação, cache hits vs misses por keyType, evolução do tamanho do cache, erros por classe |
+| **DICT — Resilience & JVM** | `dict-resilience` | Estado dos 3 circuit breakers (lookup/write/claim), CB calls por kind, retry attempts, rate limiter (permitted/waiting/rejected), falhas injetadas pelo simulator, JVM heap, threads, latência HTTP server |
+
+Acesso: http://localhost:3000 → Dashboards → DICT Client.
+
+### Observabilidade em ação (3 comandos)
+
+```bash
+make up         # otel + prometheus + tempo + loki + grafana
+make run-sim    # app + simulador in-process em :8080
+make load       # tráfego sintético (existing keys + unknowns) em loop
+```
+
+Dali, abre o Grafana e os painéis populam em ~10s. Pra exercitar resiliência, edite `application.yml` antes de `make run-sim`:
+
+```yaml
+dict:
+  simulator:
+    failure-rate: 0.30        # 30% de 5xx sintéticos
+    latency-jitter: 200ms     # jitter aleatório até 200ms
+```
+
+E veja `dict-resilience` mostrando o circuit breaker abrir/fechar, retry attempts subir, e `dict.simulator.failures.injected` correlacionado com `dict.gateway.errors`.
 
 ## ADRs
 
@@ -354,7 +389,6 @@ flowchart LR
 - [ ] Integração com Hashicorp Vault para keystore (substitui keystore em disco)
 - [ ] Reconciliação periódica de claims abertas (cron + listagem)
 - [ ] Helm chart para deploy em Kubernetes
-- [ ] Dashboards Grafana versionados como código
 - [ ] Benchmark de latência (p99 < 100ms para `lookup` em cache, < 500ms para miss)
 
 Veja [issues abertas](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/issues) para o detalhe.

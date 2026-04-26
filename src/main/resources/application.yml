@@ -29,6 +29,17 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+        dict.operation.duration: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+        dict.operation.duration: 0.5, 0.95, 0.99
+      slo:
+        dict.operation.duration: 50ms, 100ms, 250ms, 500ms, 1s
+  prometheus:
+    metrics:
+      export:
+        properties:
+          io.micrometer.prometheus.exemplars.enabled: true
   observations:
     key-values:
       service: ${spring.application.name}

@@ -1,4 +1,4 @@
-.PHONY: help up down logs build test it clean image ps run run-sim certs
+.PHONY: help up down logs build test it clean image ps run run-sim load certs
 
 MVN := ./mvnw -B -ntp
 
@@ -12,6 +12,7 @@ help:
 	@echo "  it         - mvn verify (unit + integration via Testcontainers / simulator)"
 	@echo "  run        - roda app no profile local (sem mTLS, gateway HTTP simulado)"
 	@echo "  run-sim    - roda app no profile simulator (cliente DICT + simulador in-process)"
+	@echo "  load       - dispara tráfego sintético no app pra alimentar dashboards Grafana"
 	@echo "  image      - build da imagem OCI via Spring Boot Buildpacks"
 	@echo "  certs      - gera trust store + key store de teste pra mTLS local"
 	@echo "  clean      - mvn clean + derruba volumes"
@@ -43,6 +44,9 @@ run-sim:
 
 image:
 	$(MVN) spring-boot:build-image -DskipTests
+
+load:
+	@./scripts/load.sh
 
 ps:
 	docker compose ps

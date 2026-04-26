@@ -57,6 +57,9 @@ public class LookupKeyService implements LookupKeyUseCase {
             }
             audit.record(AuditEvent.success(OP, requester, key, dur));
             return entry;
+        } catch (KeyNotFoundException knf) {
+            // already audited as NOT_FOUND above; do not double-record as ERROR
+            throw knf;
         } catch (DictException ex) {
             audit.record(AuditEvent.error(OP, requester, key, ex.getClass().getSimpleName(), elapsed(start)));
             throw ex;

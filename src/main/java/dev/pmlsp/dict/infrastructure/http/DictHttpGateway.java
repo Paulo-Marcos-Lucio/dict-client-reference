@@ -20,9 +20,9 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -66,7 +66,7 @@ public class DictHttpGateway implements DictGateway {
                     .retrieve()
                     .body(HttpDtos.EntryPayload.class);
             return Optional.ofNullable(payload).map(DictHttpGateway::toDomain);
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             if (ex.getStatusCode().value() == 404) {
                 return Optional.empty();
             }
@@ -89,7 +89,7 @@ public class DictHttpGateway implements DictGateway {
                     .retrieve()
                     .body(HttpDtos.EntryPayload.class);
             return toDomain(created);
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             throw map(ex, entry.key(), null);
         }
     }
@@ -105,7 +105,7 @@ public class DictHttpGateway implements DictGateway {
                     .body(new HttpDtos.DeleteEntryRequest(reason.name()))
                     .retrieve()
                     .toBodilessEntity();
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             throw map(ex, key, null);
         }
     }
@@ -127,7 +127,7 @@ public class DictHttpGateway implements DictGateway {
                     .retrieve()
                     .body(HttpDtos.ClaimPayload.class);
             return toDomain(created);
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             throw map(ex, key, null);
         }
     }
@@ -168,7 +168,7 @@ public class DictHttpGateway implements DictGateway {
                     .body(HttpDtos.ClaimPayload[].class);
             if (result == null) return List.of();
             return java.util.Arrays.stream(result).map(DictHttpGateway::toDomain).toList();
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             throw map(ex, null, null);
         }
     }
@@ -182,19 +182,21 @@ public class DictHttpGateway implements DictGateway {
                     .retrieve()
                     .body(HttpDtos.ClaimPayload.class);
             return toDomain(result);
-        } catch (HttpStatusCodeException ex) {
+        } catch (RestClientResponseException ex) {
             throw map(ex, null, claimId);
         }
     }
 
     private static dev.pmlsp.dict.domain.exception.DictException map(
-            HttpStatusCodeException ex, PixKey key, UUID claimId) {
+            RestClientResponseException ex, PixKey key, UUID claimId) {
         HttpStatusCode status = ex.getStatusCode();
         HttpDtos.ProblemPayload problem = parseProblem(ex);
+        log.debug("dict.http.error status={} problem={} key={} claimId={}",
+                status, problem, key == null ? null : key.masked(), claimId);
         return DictErrorMapper.toDomain(status, ex.getResponseHeaders(), problem, key, claimId);
     }
 
-    private static HttpDtos.ProblemPayload parseProblem(HttpStatusCodeException ex) {
+    private static HttpDtos.ProblemPayload parseProblem(RestClientResponseException ex) {
         try {
             return ex.getResponseBodyAs(HttpDtos.ProblemPayload.class);
         } catch (Exception ignored) {

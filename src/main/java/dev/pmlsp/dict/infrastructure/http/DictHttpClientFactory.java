@@ -31,7 +31,7 @@ public final class DictHttpClientFactory {
     }
 
     public RestClient build() {
-        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
                 .withConnectTimeout(props.endpoint().connectTimeout())
                 .withReadTimeout(props.endpoint().readTimeout());
 

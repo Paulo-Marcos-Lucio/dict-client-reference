@@ -1,0 +1,98 @@
+### Lookup de chave Pix (CPF) — vai pra cache no segundo hit
+GET http://localhost:8080/v1/dict/entries/CPF/12345678901
+Accept: application/json
+X-Payer-Ispb: 12345678
+
+### Lookup de chave Pix (EMAIL)
+GET http://localhost:8080/v1/dict/entries/EMAIL/loja@merchant.com
+Accept: application/json
+X-Payer-Ispb: 12345678
+
+### Lookup de chave Pix (EVP / aleatória)
+GET http://localhost:8080/v1/dict/entries/EVP/550e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+X-Payer-Ispb: 12345678
+
+### Criar entry (registrar chave)
+POST http://localhost:8080/v1/dict/entries
+Content-Type: application/json
+X-Participant-Ispb: 12345678
+
+{
+  "key": { "type": "EMAIL", "value": "novo@cliente.com" },
+  "account": {
+    "ispb": "12345678",
+    "branch": "0001",
+    "number": "0000123456",
+    "type": "CACC"
+  },
+  "owner": {
+    "type": "NATURAL_PERSON",
+    "document": "12345678901",
+    "name": "Alice Silva"
+  }
+}
+
+### Excluir entry (com motivo regulatório)
+DELETE http://localhost:8080/v1/dict/entries/EMAIL/novo@cliente.com
+Content-Type: application/json
+X-Participant-Ispb: 12345678
+
+{ "reason": "USER_REQUESTED" }
+
+### Iniciar portabilidade (titular muda de banco)
+POST http://localhost:8080/v1/dict/claims
+Content-Type: application/json
+X-Participant-Ispb: 87654321
+
+{
+  "type": "PORTABILITY",
+  "key": { "type": "PHONE", "value": "+5511987654321" },
+  "claimerAccount": {
+    "ispb": "87654321",
+    "branch": "0001",
+    "number": "0000999888",
+    "type": "CACC"
+  },
+  "claimerOwner": {
+    "type": "NATURAL_PERSON",
+    "document": "12345678901",
+    "name": "Alice Silva"
+  }
+}
+
+### Iniciar reivindicação de posse (titular alega ownership)
+POST http://localhost:8080/v1/dict/claims
+Content-Type: application/json
+X-Participant-Ispb: 87654321
+
+{
+  "type": "OWNERSHIP",
+  "key": { "type": "EMAIL", "value": "loja@merchant.com" },
+  "claimerAccount": {
+    "ispb": "87654321",
+    "branch": "0001",
+    "number": "0000777666",
+    "type": "CACC"
+  },
+  "claimerOwner": {
+    "type": "LEGAL_PERSON",
+    "document": "12345678000199",
+    "name": "Loja Genuína LTDA",
+    "tradeName": "Loja Genuína"
+  }
+}
+
+### Listar claims abertas (donor view)
+GET http://localhost:8080/v1/dict/claims?role=donor&ispb=12345678
+Accept: application/json
+
+### Listar claims abertas (claimer view)
+GET http://localhost:8080/v1/dict/claims?role=claimer&ispb=87654321
+Accept: application/json
+
+### Health
+GET http://localhost:8080/actuator/health
+
+### Prometheus metrics
+GET http://localhost:8080/actuator/prometheus

@@ -1,0 +1,126 @@
+spring:
+  application:
+    name: dict-client-reference
+  profiles:
+    default: local
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8080
+  shutdown: graceful
+  compression:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  observations:
+    key-values:
+      service: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://${OTEL_HOST:localhost}:4318/v1/traces
+    metrics:
+      export:
+        url: http://${OTEL_HOST:localhost}:4318/v1/metrics
+    logging:
+      endpoint: http://${OTEL_HOST:localhost}:4318/v1/logs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+dict:
+  participant-ispb: ${DICT_ISPB:12345678}
+  endpoint:
+    base-url: ${DICT_BASE_URL:http://localhost:8080/dict/v1}
+    connect-timeout: 2s
+    read-timeout: 5s
+  cache:
+    max-size: 50000
+    ttl:
+      cpf: 30s
+      cnpj: 60s
+      email: 60s
+      phone: 60s
+      evp: 30s
+  mtls:
+    enabled: ${DICT_MTLS_ENABLED:false}
+    bundle-name: ${DICT_MTLS_BUNDLE:}
+  simulator:
+    enabled: false
+    failure-rate: 0.0
+    latency-jitter: 0ms
+    store-capacity: 1000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      dict-lookup:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 50
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+      dict-write:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        failure-rate-threshold: 30
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+      dict-claim:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+  retry:
+    instances:
+      dict-lookup:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - dev.pmlsp.dict.domain.exception.DictUnavailableException
+      dict-write:
+        max-attempts: 2
+        wait-duration: 300ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - dev.pmlsp.dict.domain.exception.DictUnavailableException
+      dict-claim:
+        max-attempts: 2
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        retry-exceptions:
+          - dev.pmlsp.dict.domain.exception.DictUnavailableException
+  ratelimiter:
+    instances:
+      dict-lookup:
+        limit-for-period: 50
+        limit-refresh-period: 1s
+        timeout-duration: 100ms
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:-},%X{traceId:-},%X{spanId:-}]"

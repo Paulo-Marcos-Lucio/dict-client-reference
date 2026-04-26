@@ -1,0 +1,49 @@
+spring:
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 0
+
+management:
+  tracing:
+    sampling:
+      probability: 0.0
+
+dict:
+  participant-ispb: "12345678"
+  endpoint:
+    base-url: "http://placeholder/dict/v1"
+    connect-timeout: 2s
+    read-timeout: 5s
+  cache:
+    max-size: 100
+    ttl:
+      cpf: 30s
+      cnpj: 60s
+      email: 60s
+      phone: 60s
+      evp: 30s
+  mtls:
+    enabled: false
+    bundle-name: ""
+  simulator:
+    enabled: true
+    failure-rate: 0.0
+    latency-jitter: 0ms
+    store-capacity: 100
+
+resilience4j:
+  retry:
+    instances:
+      dict-lookup:
+        max-attempts: 1
+      dict-write:
+        max-attempts: 1
+      dict-claim:
+        max-attempts: 1
+
+logging:
+  level:
+    dev.pmlsp.dict: DEBUG

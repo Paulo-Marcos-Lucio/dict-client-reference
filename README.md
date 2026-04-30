@@ -383,6 +383,25 @@ E veja `dict-resilience` mostrando o circuit breaker abrir/fechar, retry attempt
 | [0005](./docs/adr/0005-observability-correlation.md) | Observabilidade correlacionada por `traceId` |
 | [0006](./docs/adr/0006-simulador-local.md) | Simulador local in-process do DICT |
 
+## Test Coverage & API Docs
+
+| Categoria | Tests |
+|---|---|
+| Unit (incl. ArchUnit) | 21 |
+| Integration (vs simulator) | 3 |
+| **Total** | **24** |
+
+JaCoCo coverage report gerado em `target/site/jacoco/index.html` após `./mvnw verify`.
+
+**API Documentation** (live com a app rodando em `http://localhost:8080`):
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+- OpenAPI 3 spec (JSON): <http://localhost:8080/v3/api-docs>
+- Geração offline do spec:
+  ```bash
+  ./mvnw spring-boot:run    # em outro terminal (sobe DICT facade demo na :8080)
+  curl http://localhost:8080/v3/api-docs > docs/openapi.json
+  ```
+
 ## Roadmap
 
 - [ ] Suporte a XML signing (XMLDSig) para operações que o BCB exige assinatura no payload

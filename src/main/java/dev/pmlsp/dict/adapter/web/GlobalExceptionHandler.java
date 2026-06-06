@@ -56,7 +56,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PolicyViolationException.class)
     public ResponseEntity<ProblemDetail> handle(PolicyViolationException ex) {
-        return problem(HttpStatus.UNPROCESSABLE_ENTITY, ex.code(), ex.getMessage());
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, ex.code(), ex.getMessage());
     }
 
     @ExceptionHandler(DictUnavailableException.class)

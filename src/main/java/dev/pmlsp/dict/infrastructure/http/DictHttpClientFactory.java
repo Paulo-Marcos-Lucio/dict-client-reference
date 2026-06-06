@@ -2,12 +2,11 @@ package dev.pmlsp.dict.infrastructure.http;
 
 import dev.pmlsp.dict.infrastructure.config.DictClientProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
-import org.springframework.boot.web.client.ClientHttpRequestFactories;
-import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -31,7 +30,7 @@ public final class DictHttpClientFactory {
     }
 
     public RestClient build() {
-        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
+        HttpClientSettings settings = HttpClientSettings.defaults()
                 .withConnectTimeout(props.endpoint().connectTimeout())
                 .withReadTimeout(props.endpoint().readTimeout());
 
@@ -43,7 +42,7 @@ public final class DictHttpClientFactory {
             log.warn("dict.http.mtls disabled — only acceptable for local/simulator profiles");
         }
 
-        ClientHttpRequestFactory factory = ClientHttpRequestFactories.get(JdkClientHttpRequestFactory.class, settings);
+        ClientHttpRequestFactory factory = ClientHttpRequestFactoryBuilder.jdk().build(settings);
 
         return RestClient.builder()
                 .baseUrl(props.endpoint().baseUrl())

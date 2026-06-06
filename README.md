@@ -6,14 +6,14 @@
 
 **Cliente Java *production-grade* para o DICT (Diretório de Identificadores de Contas Transacionais) do Banco Central**
 
-Spring Boot 3.4 + Java 21 · mTLS ICP-Brasil · Cache regulatory-aware · Resilience4j · OpenTelemetry · Simulador local
+Spring Boot 4.0 + Java 21 · mTLS ICP-Brasil · Cache regulatory-aware · Resilience4j · OpenTelemetry · Simulador local
 
 [![CI](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/ci.yml/badge.svg)](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/codeql.yml/badge.svg)](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/codeql.yml)
 [![Release](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/release.yml/badge.svg)](https://github.com/Paulo-Marcos-Lucio/dict-client-reference/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Java 21](https://img.shields.io/badge/Java-21_LTS-orange?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
-[![Spring Boot 3.4](https://img.shields.io/badge/Spring_Boot-3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot 4.0](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Conventional Commits](https://img.shields.io/badge/Conventional_Commits-1.0-FE5196?logo=conventionalcommits)](https://www.conventionalcommits.org/)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
@@ -61,7 +61,7 @@ Este repositório demonstra, em código real e executável, como uma integraçã
 |---|---|
 | **Operações DICT** | Lookup, create entry, delete entry, start portability, start ownership claim, list claims, complete claim, cancel claim |
 | **Modelo de domínio** | `PixKey` validado por tipo (CPF, CNPJ, EMAIL, PHONE, EVP), `Account`, `Owner`, `DictEntry`, `Claim` — puros, sem Spring |
-| **mTLS** | `SslBundle` Spring Boot 3 — truststore ICP-Brasil + keystore do participante, configurável via `application.yml` |
+| **mTLS** | `SslBundle` do Spring Boot — truststore ICP-Brasil + keystore do participante, configurável via `application.yml` |
 | **Cache regulatório** | `CacheTtlPolicy` aplica TTL conforme manual DICT v3.x; chave com claim em aberto **nunca** é cacheada |
 | **Resiliência** | Resilience4j por operação: `dict-lookup` (rate limiter), `dict-write` (circuit breaker + retry), `dict-claim` (retry conservador) |
 | **Audit** | Log estruturado JSON com PII mascarada — cada operação registra `ispb`, `op`, `chave_mascarada`, `outcome`, `durationMs`, `traceId` |
@@ -134,9 +134,9 @@ Diagramas **C4** detalhados em [`docs/architecture/`](./docs/architecture/).
 | Camada | Tecnologia |
 |---|---|
 | Runtime | Java 21 (virtual threads) |
-| App framework | Spring Boot 3.4 + Spring Web MVC + RestClient |
+| App framework | Spring Boot 4.0 + Spring Web MVC + RestClient |
 | Cache | Caffeine 3 (in-process) com TTL regulatory-aware |
-| Resiliência | Resilience4j 2.2 |
+| Resiliência | Resilience4j 2.4 |
 | Tracing | OpenTelemetry → Tempo |
 | Métricas | Micrometer → Prometheus → Grafana |
 | Logs | Logback JSON estruturado → Loki |
@@ -266,7 +266,7 @@ O manual do DICT impõe TTLs **máximos** que cada participante deve respeitar. 
 
 A produção do DICT exige mTLS com certificado **ICP-Brasil A1** emitido para o participante (banco/fintech homologado). Este projeto:
 
-- Usa `SslBundle` do Spring Boot 3 — referenciado por nome no `application.yml` (`spring.ssl.bundle.jks.dict-prod`)
+- Usa `SslBundle` do Spring Boot — referenciado por nome no `application.yml` (`spring.ssl.bundle.jks.dict-prod`)
 - Truststore com cadeia ICP-Brasil válida — não commitada no repo
 - Keystore do participante (privada) — não commitada, carregada de path local ou secret manager
 - `make certs` gera material de **teste** em `certs/` (gitignored) para desenvolvimento
@@ -387,9 +387,9 @@ E veja `dict-resilience` mostrando o circuit breaker abrir/fechar, retry attempt
 
 | Categoria | Tests |
 |---|---|
-| Unit (incl. ArchUnit) | 21 |
+| Unit (incl. ArchUnit) | 26 |
 | Integration (vs simulator) | 3 |
-| **Total** | **24** |
+| **Total** | **29** |
 
 JaCoCo coverage report gerado em `target/site/jacoco/index.html` após `./mvnw verify`.
 

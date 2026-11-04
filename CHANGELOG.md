@@ -23,8 +23,6 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 ### Fixed — Manutenção junho/2026
 - `config/tempo/tempo.yml`: removido o bloco `metadata_slo` que fazia o Tempo 2.6.1 local crashar na subida
 
-[Unreleased]: https://github.com/Paulo-Marcos-Lucio/dict-client-reference/compare/v0.1.0...HEAD
-
 ## [0.1.0] - 2026-04-26
 
 Primeira release pública. Cliente Java de referência para o DICT (Diretório de Identificadores de Contas Transacionais) do Banco Central, com simulador local rodando junto.
@@ -63,5 +61,3 @@ Primeira release pública. Cliente Java de referência para o DICT (Diretório d
 - C4 (context, container, component) e fluxos de operações em `docs/`
 - `compose.yaml` com toda a stack de observabilidade (otel + prometheus + tempo + loki + grafana)
 - Templates de issue/PR, `CODEOWNERS`, `FUNDING.yml`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CLAUDE.md`
-
-[0.1.0]: https://github.com/Paulo-Marcos-Lucio/dict-client-reference/releases/tag/v0.1.0
